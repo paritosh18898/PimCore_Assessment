@@ -94,39 +94,51 @@ class ProductController extends FrontendController
     }
     public function update(Request $request): Response
     {
-        try{
-                $name           = $request->get('name');
-                $color          = $request->get('color');  
-                $ObjectId       = $request->get('ObjectId');    
-                $uploadedImage  = $request->files->get('image');
-                $workflowState  = $request->get('workflowState');
-                $distinationPath    = $this->getParameter('kernel.project_dir'). '/public/var/assets/';
-                $originalFileName   = pathinfo($uploadedImage->getClientOriginalName(), PATHINFO_FILENAME);
-                $newFileName        = $originalFileName.'-'.uniqid().'.'.$uploadedImage->guessExtension();
-                $uploadedImage->move($distinationPath,$newFileName);
+        try {
+            $name = $request->get('name');
+            $color = $request->get('color');
+            $ObjectId = $request->get('ObjectId');
+            $workflowState = $request->get('workflowState');
+    
+            // Check if an image was uploaded
+            $uploadedImage = $request->files->get('image');
+            if ($uploadedImage) {
+                $distinationPath = $this->getParameter('kernel.project_dir'). '/public/var/assets/';
+                $originalFileName = pathinfo($uploadedImage->getClientOriginalName(), PATHINFO_FILENAME);
+                $newFileName = $originalFileName.'-'.uniqid().'.'.$uploadedImage->guessExtension();
+                $uploadedImage->move($distinationPath, $newFileName);
                 $originalFullFileNamePath = $distinationPath.$newFileName;
+    
                 $asset =  new Asset();
                 $asset->setParentId(1);
                 $asset->setFilename($newFileName);
                 $asset->setData(file_get_contents($originalFullFileNamePath));
-                $retData        = $asset->save();
+                $retData = $asset->save();
                 $latestAssetsId = $retData->getId();
-                $image          = Asset\Image::getById($latestAssetsId);    
-                $newObject = DataObject\Product::getById($ObjectId);
-                $newObject->setName($name);
-                $newObject->setColor($color);
-                $newObject->setImage($image);
-                $newObject->setWorkflowState($workflowState);
-                $newObject->save();    
-
-                return $this->redirect('/listAction');
-            }catch (\Exception $ex) {
-                return new JsonResponse([
-                    'msg' => $ex->getMessage(),
-                    'line' => $ex->getLine()
-                ]);
+                $image = Asset\Image::getById($latestAssetsId);
             }
-    }  
+    
+            // Update the object only if an image was uploaded
+            $newObject = DataObject\Product::getById($ObjectId);
+            $newObject->setName($name);
+            $newObject->setColor($color);
+            $newObject->setWorkflowState($workflowState);
+    
+            if (isset($image)) {
+                $newObject->setImage($image);
+            }
+    
+            $newObject->save();
+    
+            return $this->redirect('/listAction');
+        } catch (\Exception $ex) {
+            return new JsonResponse([
+                'msg' => $ex->getMessage(),
+                'line' => $ex->getLine()
+            ]);
+        }
+    }
+    
     public function delete(Request $request): Response    
     {
         try {

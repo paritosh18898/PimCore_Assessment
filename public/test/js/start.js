@@ -1,32 +1,25 @@
-pimcore.registerNS("pimcore.plugin.TestBundle");
+// admin/start.js
+pimcore.registerNS('pimcore.plugin.colorValidation');
+alert("start.js");
 
-pimcore.plugin.TestBundle = Class.create({
+pimcore.plugin.colorValidation = Class.create({
     initialize: function () {
-        // document.addEventListener(pimcore.events.postSaveObject, this.postSaveObject.bind(this));
-        document.addEventListener(pimcore.events.preSaveObject, this.preSaveObject.bind(this));
-    },
+        Ext.override(pimcore.object.classes.data.color, {
+            getLayoutEditItems: function () {
+                var colorField = pimcore.object.tags.color.prototype.getLayoutEditItems.call(this);
 
-    preSaveObject: function (object, type) {
-        // let colors = object.detail.object.data.data.color;
-        let colors = object.detail.object.edit.dataFields.color.component.lastValue;
-        console.log("Colors:", colors);
+                colorField.on('change', function () {
+                    var selectedColors = this.getValue();
+                    if (selectedColors.length > 2) {
+                        Ext.Msg.alert('Error', 'Please select only two colors.');
+                        this.reset();
+                    }
+                });
 
-        let count = colors.length;
-        console.log("count", count);
-
-        // if (count > 2) {
-            Ext.Msg.alert('Colors should not be more than 2.');
-           
-            throw new pimcore.error.ValidationException('Validation Error');
-            return false;
-
-        // }
-    },
-
-   
-
-    pimcoreReady: function (e) {
+                return colorField;
+            }
+        });
     }
 });
 
-var TestBundlePlugin = new pimcore.plugin.TestBundle();
+var colorValidationPlugin = new pimcore.plugin.colorValidation();

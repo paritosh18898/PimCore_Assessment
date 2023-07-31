@@ -190,6 +190,8 @@
     }).then((willUnpublish) => {
         if (willUnpublish) {
             window.location.href = "{{ path('productUnpublish') }}?id=" + productId;
+                            swal("Unpublished!", "Your data has been unpublished!", "success");
+
         }
     });
 }
